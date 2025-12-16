@@ -1,6 +1,25 @@
+"use client";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Home() {
+  const router = useRouter();
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "same-origin" });
+        if (!mounted) return;
+        if (res.ok) router.replace("/home");
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [router]);
   return (
     <div className="w-full min-h-screen relative overflow-hidden">
       <div className="w-full max-w-[1920px] min-h-screen mx-auto relative overflow-hidden">
