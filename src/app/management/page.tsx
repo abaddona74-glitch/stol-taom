@@ -57,21 +57,27 @@ export default function ManagementIndex() {
                   className="group bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-48 bg-linear-to-br from-blue-400 to-indigo-500">
-                    {r.logoUrl || r.imageUrl ? (
-                      <Image
-                        src={r.logoUrl || r.imageUrl}
-                        alt={r.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-white text-6xl font-bold opacity-50">
-                          {r.name?.charAt(0) || "R"}
+                    {(() => {
+                      const imgSrc = r.logoUrl || r.imageUrl;
+                      const hasValidSrc =
+                        typeof imgSrc === "string" && imgSrc.length > 0 &&
+                        (imgSrc.startsWith("/") || imgSrc.startsWith("http://") || imgSrc.startsWith("https://") || imgSrc.startsWith("data:"));
+                      return hasValidSrc ? (
+                        <Image
+                          src={String(imgSrc)}
+                          alt={r.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-white text-6xl font-bold opacity-50">
+                            {r.name?.charAt(0) || "R"}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                     <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                   </div>
                   <div className="p-6">

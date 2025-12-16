@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
           update: {},
           create: { menuItemId: row.id, restaurantId },
         });
-      } catch {}
+      } catch { }
     }
 
     // Store price in Redis under a dev key if provided
@@ -120,6 +120,30 @@ export async function GET(req: NextRequest) {
       createdAt: r.createdAt.getTime(),
     }));
     return NextResponse.json({ items });
+  } catch (err) {
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!devEnabled)
+    return NextResponse.json({ error: "Dev admin disabled" }, { status: 403 });
+  const user = await getUserFromRequest(req);
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const body = await req.json();
+    const { id } = body as { id?: string };
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    const prisma = getPrisma();
+    // delete any restaurant associations first
+    try {
+      await prisma.menuItemOnRestaurant.deleteMany({ where: { menuItemId: id } });
+    } catch (e) {
+      // ignore
+    }
+    await prisma.menuItem.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

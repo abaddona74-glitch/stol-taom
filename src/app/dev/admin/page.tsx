@@ -40,6 +40,7 @@ export default function DevAdminPage() {
     restaurantId: "",
     price: "",
   });
+  const [editingIngredient, setEditingIngredient] = React.useState<null | { id: string; name: string; mandatory: boolean }>(null);
   const [ingForm, setIngForm] = React.useState({
     menuId: "",
     ingredientsText: "",
@@ -182,18 +183,28 @@ export default function DevAdminPage() {
     });
     const j = await res.json();
     if (res.ok) {
-      // refresh
-      const r = await fetch("/api/dev/admin/restaurant");
-      const jr = await r.json();
-      setRestaurants(jr.items || []);
-      setRestForm({
-        id: "",
-        name: "",
-        logoUrl: "",
-        openTime: "",
-        closeTime: "",
-        ownerPhone: "",
-      });
+      // Use POST response to update UI immediately instead of issuing
+      // another GET to /api/dev/admin/restaurant.
+      const created = j?.restaurant;
+      if (created) {
+        setRestaurants((prev) => {
+          const list = Array.isArray(prev) ? [...prev] : [];
+          const exists = list.find((x) => x.id === created.id);
+          if (exists) {
+            return list.map((x) => (x.id === created.id ? { ...x, ...created } : x));
+          }
+          list.push({
+            id: created.id,
+            name: created.name,
+            logoUrl: created.logoUrl ?? undefined,
+            createdAt: Date.now(),
+          });
+          // keep alphabetical
+          list.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+          return list;
+        });
+      }
+      setRestForm({ id: "", name: "", logoUrl: "", openTime: "", closeTime: "", ownerPhone: "" });
     } else {
       alert(j.error || "Error");
     }
@@ -249,8 +260,21 @@ export default function DevAdminPage() {
     });
     const j = await res.json();
     if (res.ok) {
-      alert("Ingredients updated");
-      setIngForm({ menuId: "", ingredientsText: "" });
+      // Refresh displayed ingredients to get server-assigned ids and avoid desync/duplicates
+      try {
+        const r = await fetch(`/api/menu/${ingForm.menuId}/ingredients`);
+        const jj = await r.json();
+        setIngredients(jj.ingredients || []);
+        // sync textarea to canonical format
+        const text = (jj.ingredients || [])
+          .map((it: any) => `${it.name}:${it.mandatory ? "true" : "false"}`)
+          .join(",");
+        setIngForm({ menuId: "", ingredientsText: text });
+        alert("Ingredients updated");
+      } catch (err) {
+        setIngForm({ menuId: "", ingredientsText: "" });
+        alert("Ingredients updated (but failed to refresh list)");
+      }
     } else {
       alert(j.error || "Error");
     }
@@ -387,11 +411,18 @@ export default function DevAdminPage() {
   async function handleDeleteIngredient(id: string) {
     if (!ingForm.menuId) return alert("No menu selected");
     if (!confirm("Delete this ingredient?")) return;
-    const updated = ingredients
-      .filter((i) => i.id !== id)
-      .map((i) => ({ name: i.name, mandatory: !!i.mandatory }));
+    const updated = ingredients.filter((i) => i.id !== id).map((i) => ({ name: i.name, mandatory: !!i.mandatory }));
     const ok = await saveIngredientsFullList(ingForm.menuId, updated);
-    if (ok) setIngredients(updated as any[]);
+    if (ok) {
+      // fetch canonical list (with ids) to avoid losing ids and causing duplicates later
+      try {
+        const r = await fetch(`/api/menu/${ingForm.menuId}/ingredients`);
+        const j = await r.json();
+        setIngredients(j.ingredients || []);
+      } catch (err) {
+        setIngredients(updated as any[]);
+      }
+    }
   }
 
   // Custom select component to avoid native option styling issues in dark mode
@@ -574,13 +605,8 @@ export default function DevAdminPage() {
               setRoleSaveStatus(null);
               try {
                 if (!rolePhone) return setRoleSaveStatus("Provide phone");
-                const freeRoles = roleInput
-                  .split(",")
-                  .map((s) => s.trim())
-                  .filter(Boolean);
-                const roles = Array.from(
-                  new Set([...selectedPresetRoles, ...freeRoles]),
-                );
+                // freeRoles input was removed; use only selected preset roles
+                const roles = selectedPresetRoles;
                 const payload: any = { phone: rolePhone, roles };
                 if (roleRestaurant) payload.restaurantId = roleRestaurant;
                 const res = await apiFetch("/api/dev/admin/role", {
@@ -593,7 +619,6 @@ export default function DevAdminPage() {
                   return setRoleSaveStatus(j?.error ?? `Status ${res.status}`);
                 setRoleSaveStatus("Saved");
                 setRolePhone("");
-                setRoleInput("");
                 setRoleRestaurant("");
               } catch (err) {
                 setRoleSaveStatus(String(err));
@@ -605,12 +630,6 @@ export default function DevAdminPage() {
               placeholder="Phone (e.g. +998901234567)"
               value={rolePhone}
               onChange={(e) => setRolePhone(e.target.value)}
-              className="w-full rounded border px-2 py-1"
-            />
-            <input
-              placeholder="Roles (comma-separated) e.g. ingredient_editor"
-              value={roleInput}
-              onChange={(e) => setRoleInput(e.target.value)}
               className="w-full rounded border px-2 py-1"
             />
             <div className="mt-2 text-sm  dark:text-gray-500">
@@ -892,7 +911,7 @@ export default function DevAdminPage() {
             </div>
           </form>
         </div>
-        <div className="md:col-span-2">
+        <div id="ingredients-section" className="md:col-span-2">
           {loading ? (
             <div>Loading...</div>
           ) : (
@@ -921,6 +940,45 @@ export default function DevAdminPage() {
                       onClick={() => router.push(`/restaurant/${r.id}`)}
                     >
                       View
+                    </button>
+                    <button
+                      className="rounded bg-yellow-500 text-white px-3 py-1 text-sm"
+                      onClick={() => {
+                        // Populate form for editing
+                        setRestForm({
+                          id: r.id,
+                          name: r.name || "",
+                          logoUrl: r.logoUrl || "",
+                          openTime: "",
+                          closeTime: "",
+                          ownerPhone: "",
+                        });
+                        // scroll to top to reveal form
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="rounded bg-red-600 text-white px-3 py-1 text-sm"
+                      onClick={async () => {
+                        if (!confirm("Delete restaurant?")) return;
+                        try {
+                          const res = await apiFetch("/api/dev/admin/restaurant", {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ id: r.id }),
+                          });
+                          const j = await res.json().catch(() => null);
+                          if (!res.ok) return alert(j?.error || `Status ${res.status}`);
+                          // remove locally
+                          setRestaurants((prev) => (prev || []).filter((x) => x.id !== r.id));
+                        } catch (err) {
+                          alert(String(err));
+                        }
+                      }}
+                    >
+                      Delete
                     </button>
                     <button
                       className="rounded bg-emerald-600 text-white px-3 py-1 text-sm"
@@ -1023,24 +1081,77 @@ export default function DevAdminPage() {
                     <div className="text-xs text-gray-500">id: {m.id}</div>
                   </div>
                   <div>
-                    <button
-                      onClick={() => {
-                        const rid =
-                          impersonating ||
-                          m.restaurantId ||
-                          m.restaurant?.id ||
-                          m.restaurantId?.toString?.();
-                        if (rid)
-                          router.push(
-                            "/menu?restaurant=" +
-                            encodeURIComponent(String(rid)),
-                          );
-                        else router.push("/menu");
-                      }}
-                      className="text-sm text-blue-600"
-                    >
-                      View
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          const rid =
+                            impersonating ||
+                            m.restaurantId ||
+                            m.restaurant?.id ||
+                            m.restaurantId?.toString?.();
+                          if (rid)
+                            router.push(
+                              "/menu?restaurant=" +
+                              encodeURIComponent(String(rid)),
+                            );
+                          else router.push("/menu");
+                        }}
+                        className="text-sm text-blue-600"
+                      >
+                        View
+                      </button>
+                      <button
+                        className="text-sm text-sky-600"
+                        onClick={() => {
+                          // Select this menu item to show ingredients
+                          setIngForm((s) => ({ ...s, menuId: m.id }));
+                          // scroll to Ingredients section
+                          setTimeout(() => {
+                            const el = document.querySelector("#ingredients-section");
+                            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                          }, 100);
+                        }}
+                      >
+                        Select
+                      </button>
+                      <button
+                        className="text-sm text-yellow-600"
+                        onClick={() => {
+                          // populate menu form for editing
+                          setMenuForm((s) => ({
+                            id: m.id || "",
+                            name: m.name || "",
+                            slug: m.slug || "",
+                            logoUrl: m.logoUrl || "",
+                            restaurantId: s.restaurantId || "",
+                            price: s.price || "",
+                          }));
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-sm text-red-600"
+                        onClick={async () => {
+                          if (!confirm("Delete menu item?")) return;
+                          try {
+                            const res = await apiFetch("/api/dev/admin/menu", {
+                              method: "DELETE",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ id: m.id }),
+                            });
+                            const j = await res.json().catch(() => null);
+                            if (!res.ok) return alert(j?.error || `Status ${res.status}`);
+                            setMenuItems((prev) => (prev || []).filter((x) => x.id !== m.id));
+                          } catch (err) {
+                            alert(String(err));
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1057,22 +1168,136 @@ export default function DevAdminPage() {
               value={ingForm.menuId}
               onChange={(v) => setIngForm((s) => ({ ...s, menuId: v }))}
             />
-            <textarea
-              placeholder="ingredients as comma-separated: name[:true|false]"
-              value={ingForm.ingredientsText}
-              onChange={(e) =>
-                setIngForm((s) => ({ ...s, ingredientsText: e.target.value }))
-              }
-              className="w-full rounded border px-2 py-1"
-            />
             <div className="flex gap-2">
               <button
-                className="rounded bg-emerald-500 text-white px-3 py-1"
-                type="submit"
+                type="button"
+                className="rounded bg-indigo-500 text-white px-3 py-1"
+                onClick={() => {
+                  if (!ingForm.menuId) return alert("Select menu item first");
+                  const tempId = `new-${Date.now()}`;
+                  setEditingIngredient({ id: tempId, name: "", mandatory: false });
+                }}
               >
-                Save Ingredients
+                Add Ingredient
               </button>
             </div>
+            {editingIngredient ? (
+              <div className="space-y-2">
+                <div>
+                  <label className="text-sm block mb-1">Ingredient name</label>
+                  <input
+                    value={editingIngredient.name}
+                    onChange={(e) =>
+                      setEditingIngredient((s) => (s ? { ...s, name: e.target.value } : s))
+                    }
+                    className="w-full rounded border px-2 py-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm block mb-1">Mandatory</label>
+                  <div className="flex items-center gap-3">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="mandatory"
+                        checked={editingIngredient.mandatory === true}
+                        onChange={() =>
+                          setEditingIngredient((s) => (s ? { ...s, mandatory: true } : s))
+                        }
+                      />
+                      <span className="text-sm">Yes</span>
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="mandatory"
+                        checked={editingIngredient.mandatory === false}
+                        onChange={() =>
+                          setEditingIngredient((s) => (s ? { ...s, mandatory: false } : s))
+                        }
+                      />
+                      <span className="text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    className="rounded bg-emerald-500 text-white px-3 py-1"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      if (!ingForm.menuId || !editingIngredient) return alert("Select a menu item");
+                      try {
+                        // fetch current ingredients
+                        const res = await fetch(`/api/menu/${ingForm.menuId}/ingredients`);
+                        if (!res.ok) throw new Error(`Status ${res.status}`);
+                        const data = await res.json();
+                        const current = data.ingredients || [];
+                        // If editing an existing ingredient, replace it; if it's a new temp id, append it
+                        const exists = current.some((it: any) => it.id === editingIngredient.id);
+                        const next = exists
+                          ? current.map((it: any) =>
+                            it.id === editingIngredient.id
+                              ? { ...it, name: editingIngredient.name, mandatory: editingIngredient.mandatory }
+                              : it,
+                          )
+                          : [
+                            ...current,
+                            { id: editingIngredient.id, name: editingIngredient.name, mandatory: editingIngredient.mandatory },
+                          ];
+                        const ok = await saveIngredientsFullList(ingForm.menuId, next);
+                        if (ok) {
+                          setEditingIngredient(null);
+                          // fetch canonical list and sync textarea to avoid duplicates
+                          try {
+                            const r2 = await fetch(`/api/menu/${ingForm.menuId}/ingredients`);
+                            const j2 = await r2.json();
+                            setIngredients(j2.ingredients || []);
+                            const text = (j2.ingredients || [])
+                              .map((it: any) => `${it.name}:${it.mandatory ? "true" : "false"}`)
+                              .join(",");
+                            setIngForm((s) => ({ ...s, ingredientsText: text }));
+                          } catch (err) { }
+                        }
+                      } catch (err) {
+                        alert(String(err));
+                      }
+                    }}
+                  >
+                    Save Ingredient
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded bg-gray-200 text-black px-3 py-1"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setEditingIngredient(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <textarea
+                placeholder="ingredients as comma-separated: name[:true|false]"
+                value={ingForm.ingredientsText}
+                onChange={(e) =>
+                  setIngForm((s) => ({ ...s, ingredientsText: e.target.value }))
+                }
+                className="w-full rounded border px-2 py-1"
+              />
+            )}
+            {!editingIngredient && (
+              <div className="flex gap-2">
+                <button
+                  className="rounded bg-emerald-500 text-white px-3 py-1"
+                  type="submit"
+                >
+                  Save Ingredients
+                </button>
+              </div>
+            )}
           </form>
         </div>
         <div className="md:col-span-2">
@@ -1102,13 +1327,26 @@ export default function DevAdminPage() {
                     </div>
 
                     <div className="ml-3 flex items-center gap-2">
-                      {canEditIngredients ? (
-                        <button
-                          className="px-2 py-1 bg-red-500 text-white rounded"
-                          onClick={() => void handleDeleteIngredient(ing.id)}
-                        >
-                          Delete
-                        </button>
+                      {(canEditIngredients || process.env.NODE_ENV !== "production") ? (
+                        <>
+                          <button
+                            className="px-2 py-1 bg-yellow-500 text-white rounded text-sm"
+                            onClick={() => {
+                              // open the structured edit form instead of filling textarea
+                              setIngForm((s) => ({ ...s, menuId: ing.menuItemId || ing.menuItem?.id || s.menuId }));
+                              setEditingIngredient({ id: ing.id, name: ing.name, mandatory: !!ing.mandatory });
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="px-2 py-1 bg-red-500 text-white rounded text-sm"
+                            type="button"
+                            onClick={() => void handleDeleteIngredient(ing.id)}
+                          >
+                            Delete
+                          </button>
+                        </>
                       ) : null}
                     </div>
                   </li>

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 import { getRedis } from "@/lib/redis";
 import { getUserFromRequest } from "@/lib/jwtAuth";
+import { clearRestaurantsCache } from "@/lib/restaurantRepo";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -65,6 +66,20 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Invalidate caches so other pages see the new/updated restaurant immediately
+    try {
+      const rcli = getRedis();
+      if (rcli) {
+        await rcli.incr("menu:restaurants:version");
+      }
+    } catch (err) {
+      // ignore
+    }
+    try {
+      clearRestaurantsCache();
+    } catch (err) {
+      // ignore
+    }
     // store open/close times in Redis as dev metadata when provided
     const r = getRedis();
     if (r && (openTime || closeTime)) {
@@ -89,6 +104,37 @@ export async function POST(req: NextRequest) {
         logoUrl: row.logoUrl ?? undefined,
       },
     });
+  } catch (err) {
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  if (!devEnabled)
+    return NextResponse.json({ error: "Dev admin disabled" }, { status: 403 });
+  const user = await getUserFromRequest(req);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const body = await req.json();
+    const { id } = body as { id?: string };
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    const prisma = getPrisma();
+    await prisma.restaurant.delete({ where: { id } });
+
+    // bump redis version so cached lists invalidate
+    try {
+      const r = getRedis();
+      if (r) await r.incr("menu:restaurants:version");
+    } catch (err) {
+      // ignore
+    }
+    try {
+      clearRestaurantsCache();
+    } catch (err) {
+      // ignore
+    }
+
+    return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

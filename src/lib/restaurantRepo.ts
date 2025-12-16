@@ -164,6 +164,14 @@ export const restaurantRepo = {
   },
 };
 
+// Invalidate in-process memory cache so subsequent reads will fall through
+// to Redis / DB and reflect new data.
+export function clearRestaurantsCache() {
+  restaurantsCache.value = null;
+  restaurantsCache.ts = 0;
+  lastCacheStatus = "MISS";
+}
+
 export function getRestaurantLastCacheStatus(): string | null {
   return lastCacheStatus ?? null;
 }
