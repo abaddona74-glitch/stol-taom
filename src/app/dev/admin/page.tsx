@@ -89,7 +89,7 @@ export default function DevAdminPage() {
     }
   };
 
-  
+
 
   React.useEffect(() => {
     let mounted = true;
@@ -206,7 +206,7 @@ export default function DevAdminPage() {
     try {
       if (!payload.restaurantId && impersonating)
         payload.restaurantId = impersonating;
-    } catch (e) {}
+    } catch (e) { }
     const res = await apiFetch("/api/dev/admin/menu", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -613,8 +613,8 @@ export default function DevAdminPage() {
               onChange={(e) => setRoleInput(e.target.value)}
               className="w-full rounded border px-2 py-1"
             />
-            <div className="mt-2 text-sm text-gray-700 dark:text-gray-300">
-              Preset roles (click to toggle):
+            <div className="mt-2 text-sm  dark:text-gray-500">
+              Preset roles (select one):
             </div>
             <div className="grid grid-cols-2 gap-2 mt-1 mb-2">
               {rolePresets.map((p) => {
@@ -624,16 +624,25 @@ export default function DevAdminPage() {
                     key={p.key}
                     type="button"
                     onClick={() => {
-                      setSelectedPresetRoles((s) =>
-                        s.includes(p.key)
-                          ? s.filter((x) => x !== p.key)
-                          : [...s, p.key],
-                      );
+                      setSelectedPresetRoles([p.key]);
                     }}
-                    className={`text-left px-2 py-1 rounded border transition-colors duration-150 ${active ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:text-gray-300 dark:border-gray-700"}`}
+                    aria-pressed={active}
+                    className={`relative text-left px-2 py-1 rounded border transition-colors duration-150 ${active ? "bg-black text-white dark:bg-gray-800 dark:text-gray-200 border-black" : "bg-white text-gray-700 dark:text-gray-500 border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:border-gray-700"}`}
                     title={p.desc}
                   >
-                    {p.label}
+                    {p.key === "owner" ? (
+                      <span className="mr-1 text-yellow-500 dark:text-yellow-400">👑</span>
+                    ) : null}
+                    {p.key === "owner" ? (
+                      <span className={`${active ? "text-yellow-300" : "text-yellow-500"} dark:text-yellow-400`}>{p.label}</span>
+                    ) : (
+                      p.label
+                    )}
+                    {active ? (
+                      <span className="absolute -top-2 -right-2 inline-flex items-center justify-center w-5 h-5 text-xs font-semibold text-white bg-emerald-600 dark:bg-emerald-500 rounded-full">
+                        ✓
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -1024,7 +1033,7 @@ export default function DevAdminPage() {
                         if (rid)
                           router.push(
                             "/menu?restaurant=" +
-                              encodeURIComponent(String(rid)),
+                            encodeURIComponent(String(rid)),
                           );
                         else router.push("/menu");
                       }}

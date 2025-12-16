@@ -433,9 +433,19 @@ export default function RestaurantManagementPage() {
 
   return (
     <main className="p-6 mx-auto max-w-3xl">
-      <h1 className="text-2xl font-bold mb-4">
-        Management — {restaurantName || restaurantId}
-      </h1>
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => router.push("/management")}
+          className="rounded border px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+          aria-label="Back to restaurants"
+        >
+          ←
+        </button>
+        <h1 className="text-2xl font-bold">
+          Management — {restaurantName || restaurantId}
+        </h1>
+      </div>
       {status === "loading" || status === "checking" ? (
         <div>Checking access...</div>
       ) : null}
