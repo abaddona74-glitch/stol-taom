@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       restaurants: (r.restaurants ?? []).map((mr) => ({
         id: mr.restaurantId,
         name: mr.restaurant?.name,
-        priceOverride: mr.priceOverride ?? undefined,
+        priceOverride: (mr as any).priceOverride ?? undefined,
       })),
     }));
 
