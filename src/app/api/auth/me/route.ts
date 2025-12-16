@@ -26,6 +26,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getRedis } from "@/lib/redis";
 import {
   ACCESS_TOKEN_NAME,
   ACCESS_TTL_SEC,
@@ -39,10 +40,32 @@ export async function GET(req: NextRequest) {
     // Try access token
     const tokenUser = await getUserFromRequest(req);
     if (tokenUser) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: tokenUser.id },
-        select: { id: true, phone: true, name: true, email: true },
-      });
+      // Try to read cached user profile from Redis first to avoid DB hit
+      const r = getRedis();
+      const userCacheKey = `user:${tokenUser.id}`;
+      let dbUser = null;
+      if (r) {
+        try {
+          const raw = await r.get(userCacheKey);
+          if (raw) dbUser = JSON.parse(raw);
+        } catch {
+          dbUser = null;
+        }
+      }
+      if (!dbUser) {
+        dbUser = await prisma.user.findUnique({
+          where: { id: tokenUser.id },
+          select: { id: true, phone: true, name: true, email: true },
+        });
+        if (r && dbUser) {
+          try {
+            const ttl = Number(process.env.USER_CACHE_TTL_SECONDS || "60");
+            await r.set(userCacheKey, JSON.stringify(dbUser), "EX", Math.max(10, ttl));
+          } catch {
+            // ignore cache set errors
+          }
+        }
+      }
       if (dbUser) {
         const roles = await getUserRoles(tokenUser.id).catch(() => []);
         return NextResponse.json({
@@ -61,10 +84,32 @@ export async function GET(req: NextRequest) {
     // Try refresh to mint new access (without using NextResponse.next in app routes)
     const refreshed = await refreshAccessToken(req);
     if (refreshed?.user) {
-      const dbUser = await prisma.user.findUnique({
-        where: { id: refreshed.user.id },
-        select: { id: true, phone: true, name: true, email: true },
-      });
+      // Try to read cached user profile from Redis first
+      const r2 = getRedis();
+      const userCacheKey2 = `user:${String(refreshed.user.id)}`;
+      let dbUser = null;
+      if (r2) {
+        try {
+          const raw = await r2.get(userCacheKey2);
+          if (raw) dbUser = JSON.parse(raw);
+        } catch {
+          dbUser = null;
+        }
+      }
+      if (!dbUser) {
+        dbUser = await prisma.user.findUnique({
+          where: { id: refreshed.user.id },
+          select: { id: true, phone: true, name: true, email: true },
+        });
+        if (r2 && dbUser) {
+          try {
+            const ttl = Number(process.env.USER_CACHE_TTL_SECONDS || "60");
+            await r2.set(userCacheKey2, JSON.stringify(dbUser), "EX", Math.max(10, ttl));
+          } catch {
+            // ignore cache set errors
+          }
+        }
+      }
       if (!dbUser)
         return NextResponse.json({ authenticated: false }, { status: 401 });
       const roles = await getUserRoles(String(refreshed.user.id)).catch(() => []);
