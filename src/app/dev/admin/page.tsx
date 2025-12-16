@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { useTheme, type ThemeMode } from "@/lib/theme-context";
 import { apiFetch } from "@/lib/apiFetch";
 import { useRouter } from "next/navigation";
 
@@ -57,62 +58,6 @@ export default function DevAdminPage() {
       label: "Manager",
       desc: "Manage orders, staff, customers",
     },
-    {
-      key: "staff_manage",
-      label: "Xodim qo'shadi/\u00F6chiradi",
-      desc: "Add/remove staff",
-    },
-    {
-      key: "price_approver",
-      label: "Menyu narxlarini tasdiqlaydi",
-      desc: "Approve menu prices",
-    },
-    {
-      key: "finance",
-      label: "Kassa va to'lovlarni ko'radi",
-      desc: "View payments & cash reports",
-    },
-    {
-      key: "marketing",
-      label: "Reklama/Marketing",
-      desc: "Enable marketing options",
-    },
-    {
-      key: "orders_manage",
-      label: "Buyurtmalarni boshqarish",
-      desc: "Manage orders flow",
-    },
-    {
-      key: "customer_contact",
-      label: "Mijozlarga yozish/refund",
-      desc: "Message customers / refunds",
-    },
-    {
-      key: "menu_edit",
-      label: "Menyuni o'zgartirish (narx emas)",
-      desc: "Edit menu items but not prices",
-    },
-    {
-      key: "schedule",
-      label: "Xodimlarning ish vaqtlari",
-      desc: "Manage staff schedules",
-    },
-    {
-      key: "suppliers",
-      label: "Yetkazib beruvchilar bilan ishlash",
-      desc: "Manage suppliers & stock",
-    },
-    { key: "chef", label: "Oshpaz", desc: "View recipes, update order status" },
-    {
-      key: "courier",
-      label: "Courier",
-      desc: "See own orders, change status, send location",
-    },
-    {
-      key: "support",
-      label: "Support",
-      desc: "View all orders, refunds, contact customers",
-    },
   ];
   const [selectedPresetRoles, setSelectedPresetRoles] = React.useState<
     string[]
@@ -127,6 +72,24 @@ export default function DevAdminPage() {
   const [managerActionStatus, setManagerActionStatus] = React.useState<
     string | null
   >(null);
+
+  // Theme controls (optional; ThemeProvider may not be present in some test contexts)
+  let themeContext: { theme: ThemeMode; setTheme: (t: ThemeMode) => void } | null = null;
+  try {
+    themeContext = useTheme();
+  } catch (e) {
+    themeContext = null;
+  }
+
+  const setGlobalTheme = (t: ThemeMode) => {
+    try {
+      themeContext?.setTheme(t);
+    } catch (e) {
+      console.error("Failed to set global theme", e);
+    }
+  };
+
+  
 
   React.useEffect(() => {
     let mounted = true;
@@ -579,6 +542,29 @@ export default function DevAdminPage() {
         ingredients and edit images/prices.
       </p>
 
+      {/* Theme controls: global + per-page */}
+      <div className="mt-4 mb-4">
+        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3 flex items-center gap-3">
+          <div className="flex-1 text-sm">
+            Theme: <strong>{themeContext ? (themeContext.theme === "dark" ? "🌙 Dark" : "☀️ Light") : "(no ThemeProvider)"}</strong>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setGlobalTheme("dark")}
+              className="px-3 py-1 rounded bg-blue-600 text-white text-sm"
+            >
+              🌙 Dark
+            </button>
+            <button
+              onClick={() => setGlobalTheme("light")}
+              className="px-3 py-1 rounded bg-yellow-400 text-black text-sm"
+            >
+              ☀️ Light
+            </button>
+          </div>
+        </div>
+      </div>
+
       <AdminSectionHeader>Role Management</AdminSectionHeader>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
@@ -644,7 +630,7 @@ export default function DevAdminPage() {
                           : [...s, p.key],
                       );
                     }}
-                    className={`text-left px-2 py-1 rounded border ${active ? "bg-emerald-600 text-white" : "bg-transparent text-gray-200 dark:text-gray-300"}`}
+                    className={`text-left px-2 py-1 rounded border transition-colors duration-150 ${active ? "bg-emerald-600 text-white border-emerald-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-transparent dark:text-gray-300 dark:border-gray-700"}`}
                     title={p.desc}
                   >
                     {p.label}
