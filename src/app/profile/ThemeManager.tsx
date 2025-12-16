@@ -89,11 +89,16 @@ export default function ThemeManager() {
                 : p,
         );
         setPages(next as PageThemeConfig[]);
-        // If we're toggling the current page, apply the theme immediately
+        // If we're toggling the current page, apply the theme immediately (transiently)
         try {
             const cfg = next.find((pp) => currentPath.includes(pp.path));
             if (cfg) {
-                setThemeFromContext(cfg.currentTheme as ThemeMode);
+                // Prefer transient setter to avoid overwriting global stored app-theme
+                if (typeof themeContext.setThemeTransient === "function") {
+                    themeContext.setThemeTransient(cfg.currentTheme as ThemeMode);
+                } else {
+                    setThemeFromContext(cfg.currentTheme as ThemeMode);
+                }
             }
         } catch (e) {
             // ignore
@@ -112,42 +117,13 @@ export default function ThemeManager() {
 
     return (
         <div className="space-y-4">
-            <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <h3 className="text-sm font-semibold mb-3">
-                    Joriy sahifa tema:{" "}
-                    <span className="text-blue-400">
-                        {theme === "dark" ? "🌙 Dark" : "☀️ Light"}
-                    </span>
-                </h3>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setTheme("dark")}
-                        className={`px-4 py-2 rounded text-sm font-medium transition cursor-pointer ${theme === "dark"
-                                ? "bg-blue-600 text-white"
-                                : "bg-black/5 text-black/80 hover:bg-black/10"
-                            }`}
-                        aria-pressed={theme === "dark"}
-                    >
-                        🌙 Dark
-                    </button>
-                    <button
-                        onClick={() => setTheme("light")}
-                        className={`px-4 py-2 rounded text-sm font-medium transition cursor-pointer ${theme === "light"
-                                ? "bg-yellow-500 text-black"
-                                : "bg-white/10 text-white/70 hover:bg-white/20"
-                            }`}
-                        aria-pressed={theme === "light"}
-                    >
-                        ☀️ Light
-                    </button>
-                </div>
-            </div>
+            {/* Current-page theme controls removed per user request */}
 
             <div className="bg-white/5 border border-white/10 rounded-lg p-4">
                 <h3 className="text-sm font-semibold mb-3">
                     Barcha sahifalar tema sozlamalari
                 </h3>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+                <div className="space-y-2  overflow-y-auto">
                     {!pages ? (
                         <div className="p-2 text-xs text-gray-400">Yuklanmoqda...</div>
                     ) : (
@@ -161,8 +137,8 @@ export default function ThemeManager() {
                                     <button
                                         onClick={() => togglePageTheme(page.path)}
                                         className={`px-2 py-1 rounded text-xs font-medium transition cursor-pointer ${page.currentTheme === "dark"
-                                                ? "bg-blue-600 text-white"
-                                                : "bg-yellow-500 text-black"
+                                            ? "bg-blue-600 text-white"
+                                            : "bg-yellow-500 text-black"
                                             }`}
                                         aria-pressed={page.currentTheme === "dark"}
                                     >
@@ -175,18 +151,8 @@ export default function ThemeManager() {
                 </div>
             </div>
 
-            <div
-                className={`rounded-lg p-3 text-xs ${theme === "light"
-                        ? "bg-blue-50 border border-blue-200 text-blue-800"
-                        : "bg-blue-500/20 border border-blue-500/30 text-blue-300"
-                    }`}
-            >
-                <p>
-                    <strong>Eslatma:</strong> Sahifa tema sozlamalari `localStorage` ga
-                    saqlanadi va qayta yuklanganda tiklanadi. Agar siz sahifa uchun tema
-                    o'rnatsangiz, u darhol joriy sahifaga tatbiq etiladi.
-                </p>
-            </div>
+
+
         </div>
     );
 }

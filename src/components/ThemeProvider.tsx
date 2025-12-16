@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ThemeContext, type ThemeMode } from "@/lib/theme-context";
+import { usePathname } from "next/navigation";
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeMode>("dark");
@@ -21,14 +22,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    // Check if there's a stored preference
+    // Check if there's a stored preference and per-page override
     const stored = localStorage.getItem("app-theme") as ThemeMode | null;
-    if (stored) {
+    let pageThemes: Array<{ path: string; currentTheme: ThemeMode }> | null = null;
+    try {
+      const raw = localStorage.getItem("page-themes");
+      if (raw) pageThemes = JSON.parse(raw);
+    } catch {
+      pageThemes = null;
+    }
+    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+    const pageCfg = pageThemes ? pageThemes.find((p) => pathname.includes(p.path)) : null;
+    if (pageCfg) {
+      setThemeState(pageCfg.currentTheme as ThemeMode);
+      applyTheme(pageCfg.currentTheme as ThemeMode);
+    } else if (stored) {
       setThemeState(stored);
       applyTheme(stored);
     } else {
       // Default to dark - ensure dark class is applied
       applyTheme("dark");
+      setThemeState("dark");
     }
 
     setMounted(true);
@@ -36,8 +50,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = (newTheme: ThemeMode) => {
     setThemeState(newTheme);
-    localStorage.setItem("app-theme", newTheme);
+    try {
+      localStorage.setItem("app-theme", newTheme);
+    } catch { }
     // Apply to DOM immediately
+    const root = document.documentElement;
+    if (newTheme === "light") {
+      root.classList.remove("dark");
+      root.classList.add("light");
+    } else {
+      root.classList.remove("light");
+      root.classList.add("dark");
+    }
+  };
+
+  // transient setter: apply theme immediately but don't persist
+  const setThemeTransient = (newTheme: ThemeMode) => {
+    setThemeState(newTheme);
     const root = document.documentElement;
     if (newTheme === "light") {
       root.classList.remove("dark");
@@ -58,13 +87,34 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [mounted]);
 
+  // On client-side navigation, prefer per-page theme if configured.
+  const pathname = usePathname();
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("page-themes");
+      if (!raw) return;
+      const pages: Array<{ path: string; currentTheme: ThemeMode }> = JSON.parse(raw);
+      const cfg = pages.find((p) => pathname?.includes(p.path));
+      if (cfg) {
+        // apply transiently (do not overwrite stored app-theme)
+        setThemeTransient(cfg.currentTheme as ThemeMode);
+      } else {
+        // no per-page override: ensure stored app-theme is applied
+        const stored = localStorage.getItem("app-theme") as ThemeMode | null;
+        if (stored) setThemeTransient(stored);
+      }
+    } catch {
+      // ignore
+    }
+  }, [pathname]);
+
   // Prevent rendering until client-side hydration
   if (!mounted) {
     return <>{children}</>;
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, setThemeTransient }}>
       {children}
     </ThemeContext.Provider>
   );
