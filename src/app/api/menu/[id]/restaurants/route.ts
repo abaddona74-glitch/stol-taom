@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
           restaurantId: rid,
           priceOverride: priceOverride || null,
         }));
-        await tx.menuItemOnRestaurant.createMany({ data });
+        await tx.menuItemOnRestaurant.createMany({ data: data as any });
       }
     });
 
@@ -127,7 +127,7 @@ export async function PATCH(req: NextRequest) {
       restaurantIds.map((rid) =>
         prisma.menuItemOnRestaurant.updateMany({
           where: { menuItemId: id, restaurantId: rid },
-          data: { priceOverride: priceOverride || null },
+          data: ({ priceOverride: priceOverride || null } as any),
         })
       )
     );

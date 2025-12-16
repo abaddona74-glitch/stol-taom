@@ -8,8 +8,6 @@
     "dev:host": "next dev --turbopack --hostname 0.0.0.0",
     "build": "next build --turbopack",
     "start": "next start",
-    "start:standalone": "node scripts/start-standalone.cjs",
-    "standalone": "npm run build:standalone && npm run start:standalone",
     "lint": "biome check",
     "format": "biome format --write",
     "prisma:generate": "prisma generate",
