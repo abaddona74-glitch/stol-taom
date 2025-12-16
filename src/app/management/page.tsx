@@ -25,10 +25,10 @@ export default function ManagementIndex() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-800 p-6">
+    <main className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-800 p-6">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold mb-3 bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Restaurant Management
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
@@ -56,7 +56,7 @@ export default function ManagementIndex() {
                   href={`/management/restaurant/${r.id}`}
                   className="group bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                 >
-                  <div className="relative h-48 bg-gradient-to-br from-blue-400 to-indigo-500">
+                  <div className="relative h-48 bg-linear-to-br from-blue-400 to-indigo-500">
                     {r.logoUrl || r.imageUrl ? (
                       <Image
                         src={r.logoUrl || r.imageUrl}
@@ -72,7 +72,7 @@ export default function ManagementIndex() {
                         </div>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                   </div>
                   <div className="p-6">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-blue-600 transition-colors">
