@@ -46,6 +46,11 @@ export default function ProfileClient() {
   const [tab, setTab] = React.useState("account");
   const router = useRouter();
   const { theme } = useTheme();
+  // Only show dev/debug tabs when running in non-production or when
+  // NEXT_PUBLIC_DEV_ADMIN is explicitly enabled at build time.
+  const devAdminEnabled =
+    process.env.NODE_ENV !== "production" ||
+    process.env.NEXT_PUBLIC_DEV_ADMIN === "true";
 
   React.useEffect(() => {
     console.log(
@@ -167,12 +172,14 @@ export default function ProfileClient() {
           >
             Premium
           </Tabs.Trigger>
-          <Tabs.Trigger
-            value="redis"
-            className={`rounded px-3 py-1 text-sm ${tab === "redis" ? "bg-white/10" : "hover:bg-white/5"}`}
-          >
-            Redis
-          </Tabs.Trigger>
+          {devAdminEnabled && (
+            <Tabs.Trigger
+              value="redis"
+              className={`rounded px-3 py-1 text-sm ${tab === "redis" ? "bg-white/10" : "hover:bg-white/5"}`}
+            >
+              Redis
+            </Tabs.Trigger>
+          )}
           <Tabs.Trigger
             value="theme"
             className={`rounded px-3 py-1 text-sm ${tab === "theme" ? "bg-white/10" : "hover:bg-white/5"}`}
@@ -429,11 +436,13 @@ export default function ProfileClient() {
           </Section>
         </Tabs.Content>
 
-        <Tabs.Content value="redis" className="space-y-4">
-          <Section title="Redis Debugger">
-            <RedisDebugger />
-          </Section>
-        </Tabs.Content>
+        {devAdminEnabled && (
+          <Tabs.Content value="redis" className="space-y-4">
+            <Section title="Redis Debugger">
+              <RedisDebugger />
+            </Section>
+          </Tabs.Content>
+        )}
 
         <Tabs.Content value="theme" className="space-y-4">
           <Section title="Tema Sozlamalari">
