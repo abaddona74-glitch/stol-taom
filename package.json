@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node ./scripts/check-redis.cjs",
     "dev": "next dev --turbopack",
     "preinstall": "node ./scripts/check-redis.cjs",
     "dev:webpack": "next dev",
