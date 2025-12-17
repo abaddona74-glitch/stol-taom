@@ -177,7 +177,12 @@ export async function getUserRoles(userId: string): Promise<LoadedUserRole[]> {
   }));
   if (r) {
     try {
-      await r.set(cacheKey, JSON.stringify(out), "EX", Math.max(10, ROLE_CACHE_TTL_SEC));
+      await r.set(
+        cacheKey,
+        JSON.stringify(out),
+        "EX",
+        Math.max(10, ROLE_CACHE_TTL_SEC),
+      );
     } catch {
       // ignore cache set errors
     }

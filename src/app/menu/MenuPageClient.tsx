@@ -40,7 +40,11 @@ export default function MenuPageClient() {
           logoUrl?: string;
           createdAt?: number;
           priceOverride?: string;
-          restaurants?: Array<{ id: string; name?: string; priceOverride?: string }>;
+          restaurants?: Array<{
+            id: string;
+            name?: string;
+            priceOverride?: string;
+          }>;
         }>;
         const mapped: MenuItem[] = list.map((it) => ({
           id: it.id,

@@ -113,7 +113,8 @@ export async function DELETE(req: NextRequest) {
   if (!devEnabled)
     return NextResponse.json({ error: "Dev admin disabled" }, { status: 403 });
   const user = await getUserFromRequest(req);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const body = await req.json();
     const { id } = body as { id?: string };

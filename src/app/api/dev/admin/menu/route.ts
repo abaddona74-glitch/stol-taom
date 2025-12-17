@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
           update: {},
           create: { menuItemId: row.id, restaurantId },
         });
-      } catch { }
+      } catch {}
     }
 
     // Store price in Redis under a dev key if provided
@@ -138,7 +138,9 @@ export async function DELETE(req: NextRequest) {
     const prisma = getPrisma();
     // delete any restaurant associations first
     try {
-      await prisma.menuItemOnRestaurant.deleteMany({ where: { menuItemId: id } });
+      await prisma.menuItemOnRestaurant.deleteMany({
+        where: { menuItemId: id },
+      });
     } catch (e) {
       // ignore
     }

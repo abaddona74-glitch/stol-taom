@@ -40,7 +40,11 @@ export default function DevAdminPage() {
     restaurantId: "",
     price: "",
   });
-  const [editingIngredient, setEditingIngredient] = React.useState<null | { id: string; name: string; mandatory: boolean }>(null);
+  const [editingIngredient, setEditingIngredient] = React.useState<null | {
+    id: string;
+    name: string;
+    mandatory: boolean;
+  }>(null);
   const [ingForm, setIngForm] = React.useState({
     menuId: "",
     ingredientsText: "",
@@ -75,7 +79,10 @@ export default function DevAdminPage() {
   >(null);
 
   // Theme controls (optional; ThemeProvider may not be present in some test contexts)
-  let themeContext: { theme: ThemeMode; setTheme: (t: ThemeMode) => void } | null = null;
+  let themeContext: {
+    theme: ThemeMode;
+    setTheme: (t: ThemeMode) => void;
+  } | null = null;
   try {
     themeContext = useTheme();
   } catch (e) {
@@ -89,8 +96,6 @@ export default function DevAdminPage() {
       console.error("Failed to set global theme", e);
     }
   };
-
-
 
   React.useEffect(() => {
     let mounted = true;
@@ -191,7 +196,9 @@ export default function DevAdminPage() {
           const list = Array.isArray(prev) ? [...prev] : [];
           const exists = list.find((x) => x.id === created.id);
           if (exists) {
-            return list.map((x) => (x.id === created.id ? { ...x, ...created } : x));
+            return list.map((x) =>
+              x.id === created.id ? { ...x, ...created } : x,
+            );
           }
           list.push({
             id: created.id,
@@ -204,7 +211,14 @@ export default function DevAdminPage() {
           return list;
         });
       }
-      setRestForm({ id: "", name: "", logoUrl: "", openTime: "", closeTime: "", ownerPhone: "" });
+      setRestForm({
+        id: "",
+        name: "",
+        logoUrl: "",
+        openTime: "",
+        closeTime: "",
+        ownerPhone: "",
+      });
     } else {
       alert(j.error || "Error");
     }
@@ -217,7 +231,7 @@ export default function DevAdminPage() {
     try {
       if (!payload.restaurantId && impersonating)
         payload.restaurantId = impersonating;
-    } catch (e) { }
+    } catch (e) {}
     const res = await apiFetch("/api/dev/admin/menu", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -411,7 +425,9 @@ export default function DevAdminPage() {
   async function handleDeleteIngredient(id: string) {
     if (!ingForm.menuId) return alert("No menu selected");
     if (!confirm("Delete this ingredient?")) return;
-    const updated = ingredients.filter((i) => i.id !== id).map((i) => ({ name: i.name, mandatory: !!i.mandatory }));
+    const updated = ingredients
+      .filter((i) => i.id !== id)
+      .map((i) => ({ name: i.name, mandatory: !!i.mandatory }));
     const ok = await saveIngredientsFullList(ingForm.menuId, updated);
     if (ok) {
       // fetch canonical list (with ids) to avoid losing ids and causing duplicates later
@@ -577,7 +593,14 @@ export default function DevAdminPage() {
       <div className="mt-4 mb-4">
         <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3 flex items-center gap-3">
           <div className="flex-1 text-sm">
-            Theme: <strong>{themeContext ? (themeContext.theme === "dark" ? "🌙 Dark" : "☀️ Light") : "(no ThemeProvider)"}</strong>
+            Theme:{" "}
+            <strong>
+              {themeContext
+                ? themeContext.theme === "dark"
+                  ? "🌙 Dark"
+                  : "☀️ Light"
+                : "(no ThemeProvider)"}
+            </strong>
           </div>
           <div className="flex gap-2">
             <button
@@ -650,10 +673,16 @@ export default function DevAdminPage() {
                     title={p.desc}
                   >
                     {p.key === "owner" ? (
-                      <span className="mr-1 text-yellow-500 dark:text-yellow-400">👑</span>
+                      <span className="mr-1 text-yellow-500 dark:text-yellow-400">
+                        👑
+                      </span>
                     ) : null}
                     {p.key === "owner" ? (
-                      <span className={`${active ? "text-yellow-300" : "text-yellow-500"} dark:text-yellow-400`}>{p.label}</span>
+                      <span
+                        className={`${active ? "text-yellow-300" : "text-yellow-500"} dark:text-yellow-400`}
+                      >
+                        {p.label}
+                      </span>
                     ) : (
                       p.label
                     )}
@@ -964,15 +993,21 @@ export default function DevAdminPage() {
                       onClick={async () => {
                         if (!confirm("Delete restaurant?")) return;
                         try {
-                          const res = await apiFetch("/api/dev/admin/restaurant", {
-                            method: "DELETE",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ id: r.id }),
-                          });
+                          const res = await apiFetch(
+                            "/api/dev/admin/restaurant",
+                            {
+                              method: "DELETE",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ id: r.id }),
+                            },
+                          );
                           const j = await res.json().catch(() => null);
-                          if (!res.ok) return alert(j?.error || `Status ${res.status}`);
+                          if (!res.ok)
+                            return alert(j?.error || `Status ${res.status}`);
                           // remove locally
-                          setRestaurants((prev) => (prev || []).filter((x) => x.id !== r.id));
+                          setRestaurants((prev) =>
+                            (prev || []).filter((x) => x.id !== r.id),
+                          );
                         } catch (err) {
                           alert(String(err));
                         }
@@ -1092,7 +1127,7 @@ export default function DevAdminPage() {
                           if (rid)
                             router.push(
                               "/menu?restaurant=" +
-                              encodeURIComponent(String(rid)),
+                                encodeURIComponent(String(rid)),
                             );
                           else router.push("/menu");
                         }}
@@ -1107,8 +1142,14 @@ export default function DevAdminPage() {
                           setIngForm((s) => ({ ...s, menuId: m.id }));
                           // scroll to Ingredients section
                           setTimeout(() => {
-                            const el = document.querySelector("#ingredients-section");
-                            if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                            const el = document.querySelector(
+                              "#ingredients-section",
+                            );
+                            if (el)
+                              el.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              });
                           }, 100);
                         }}
                       >
@@ -1142,8 +1183,11 @@ export default function DevAdminPage() {
                               body: JSON.stringify({ id: m.id }),
                             });
                             const j = await res.json().catch(() => null);
-                            if (!res.ok) return alert(j?.error || `Status ${res.status}`);
-                            setMenuItems((prev) => (prev || []).filter((x) => x.id !== m.id));
+                            if (!res.ok)
+                              return alert(j?.error || `Status ${res.status}`);
+                            setMenuItems((prev) =>
+                              (prev || []).filter((x) => x.id !== m.id),
+                            );
                           } catch (err) {
                             alert(String(err));
                           }
@@ -1175,7 +1219,11 @@ export default function DevAdminPage() {
                 onClick={() => {
                   if (!ingForm.menuId) return alert("Select menu item first");
                   const tempId = `new-${Date.now()}`;
-                  setEditingIngredient({ id: tempId, name: "", mandatory: false });
+                  setEditingIngredient({
+                    id: tempId,
+                    name: "",
+                    mandatory: false,
+                  });
                 }}
               >
                 Add Ingredient
@@ -1188,7 +1236,9 @@ export default function DevAdminPage() {
                   <input
                     value={editingIngredient.name}
                     onChange={(e) =>
-                      setEditingIngredient((s) => (s ? { ...s, name: e.target.value } : s))
+                      setEditingIngredient((s) =>
+                        s ? { ...s, name: e.target.value } : s,
+                      )
                     }
                     className="w-full rounded border px-2 py-1"
                   />
@@ -1202,7 +1252,9 @@ export default function DevAdminPage() {
                         name="mandatory"
                         checked={editingIngredient.mandatory === true}
                         onChange={() =>
-                          setEditingIngredient((s) => (s ? { ...s, mandatory: true } : s))
+                          setEditingIngredient((s) =>
+                            s ? { ...s, mandatory: true } : s,
+                          )
                         }
                       />
                       <span className="text-sm">Yes</span>
@@ -1213,7 +1265,9 @@ export default function DevAdminPage() {
                         name="mandatory"
                         checked={editingIngredient.mandatory === false}
                         onChange={() =>
-                          setEditingIngredient((s) => (s ? { ...s, mandatory: false } : s))
+                          setEditingIngredient((s) =>
+                            s ? { ...s, mandatory: false } : s,
+                          )
                         }
                       />
                       <span className="text-sm">No</span>
@@ -1226,38 +1280,62 @@ export default function DevAdminPage() {
                     className="rounded bg-emerald-500 text-white px-3 py-1"
                     onClick={async (e) => {
                       e.preventDefault();
-                      if (!ingForm.menuId || !editingIngredient) return alert("Select a menu item");
+                      if (!ingForm.menuId || !editingIngredient)
+                        return alert("Select a menu item");
                       try {
                         // fetch current ingredients
-                        const res = await fetch(`/api/menu/${ingForm.menuId}/ingredients`);
+                        const res = await fetch(
+                          `/api/menu/${ingForm.menuId}/ingredients`,
+                        );
                         if (!res.ok) throw new Error(`Status ${res.status}`);
                         const data = await res.json();
                         const current = data.ingredients || [];
                         // If editing an existing ingredient, replace it; if it's a new temp id, append it
-                        const exists = current.some((it: any) => it.id === editingIngredient.id);
+                        const exists = current.some(
+                          (it: any) => it.id === editingIngredient.id,
+                        );
                         const next = exists
                           ? current.map((it: any) =>
-                            it.id === editingIngredient.id
-                              ? { ...it, name: editingIngredient.name, mandatory: editingIngredient.mandatory }
-                              : it,
-                          )
+                              it.id === editingIngredient.id
+                                ? {
+                                    ...it,
+                                    name: editingIngredient.name,
+                                    mandatory: editingIngredient.mandatory,
+                                  }
+                                : it,
+                            )
                           : [
-                            ...current,
-                            { id: editingIngredient.id, name: editingIngredient.name, mandatory: editingIngredient.mandatory },
-                          ];
-                        const ok = await saveIngredientsFullList(ingForm.menuId, next);
+                              ...current,
+                              {
+                                id: editingIngredient.id,
+                                name: editingIngredient.name,
+                                mandatory: editingIngredient.mandatory,
+                              },
+                            ];
+                        const ok = await saveIngredientsFullList(
+                          ingForm.menuId,
+                          next,
+                        );
                         if (ok) {
                           setEditingIngredient(null);
                           // fetch canonical list and sync textarea to avoid duplicates
                           try {
-                            const r2 = await fetch(`/api/menu/${ingForm.menuId}/ingredients`);
+                            const r2 = await fetch(
+                              `/api/menu/${ingForm.menuId}/ingredients`,
+                            );
                             const j2 = await r2.json();
                             setIngredients(j2.ingredients || []);
                             const text = (j2.ingredients || [])
-                              .map((it: any) => `${it.name}:${it.mandatory ? "true" : "false"}`)
+                              .map(
+                                (it: any) =>
+                                  `${it.name}:${it.mandatory ? "true" : "false"}`,
+                              )
                               .join(",");
-                            setIngForm((s) => ({ ...s, ingredientsText: text }));
-                          } catch (err) { }
+                            setIngForm((s) => ({
+                              ...s,
+                              ingredientsText: text,
+                            }));
+                          } catch (err) {}
                         }
                       } catch (err) {
                         alert(String(err));
@@ -1327,14 +1405,25 @@ export default function DevAdminPage() {
                     </div>
 
                     <div className="ml-3 flex items-center gap-2">
-                      {(canEditIngredients || process.env.NODE_ENV !== "production") ? (
+                      {canEditIngredients ||
+                      process.env.NODE_ENV !== "production" ? (
                         <>
                           <button
                             className="px-2 py-1 bg-yellow-500 text-white rounded text-sm"
                             onClick={() => {
                               // open the structured edit form instead of filling textarea
-                              setIngForm((s) => ({ ...s, menuId: ing.menuItemId || ing.menuItem?.id || s.menuId }));
-                              setEditingIngredient({ id: ing.id, name: ing.name, mandatory: !!ing.mandatory });
+                              setIngForm((s) => ({
+                                ...s,
+                                menuId:
+                                  ing.menuItemId ||
+                                  ing.menuItem?.id ||
+                                  s.menuId,
+                              }));
+                              setEditingIngredient({
+                                id: ing.id,
+                                name: ing.name,
+                                mandatory: !!ing.mandatory,
+                              });
                             }}
                           >
                             Edit

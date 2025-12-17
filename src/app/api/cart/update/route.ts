@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest) {
       try {
         const r = getRedis();
         if (r) await r.del(`orders:view:${user.id}`);
-      } catch { }
+      } catch {}
       return NextResponse.json({ success: true, removed: true });
     }
 
@@ -46,7 +46,7 @@ export async function PATCH(req: NextRequest) {
     try {
       const r = getRedis();
       if (r) await r.del(`orders:view:${user.id}`);
-    } catch { }
+    } catch {}
     return NextResponse.json({ success: true, item: updated });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);

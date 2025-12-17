@@ -24,15 +24,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // Check if there's a stored preference and per-page override
     const stored = localStorage.getItem("app-theme") as ThemeMode | null;
-    let pageThemes: Array<{ path: string; currentTheme: ThemeMode }> | null = null;
+    let pageThemes: Array<{ path: string; currentTheme: ThemeMode }> | null =
+      null;
     try {
       const raw = localStorage.getItem("page-themes");
       if (raw) pageThemes = JSON.parse(raw);
     } catch {
       pageThemes = null;
     }
-    const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
-    const pageCfg = pageThemes ? pageThemes.find((p) => pathname.includes(p.path)) : null;
+    const pathname =
+      typeof window !== "undefined" ? window.location.pathname : "/";
+    const pageCfg = pageThemes
+      ? pageThemes.find((p) => pathname.includes(p.path))
+      : null;
     if (pageCfg) {
       setThemeState(pageCfg.currentTheme as ThemeMode);
       applyTheme(pageCfg.currentTheme as ThemeMode);
@@ -52,7 +56,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(newTheme);
     try {
       localStorage.setItem("app-theme", newTheme);
-    } catch { }
+    } catch {}
     // Apply to DOM immediately
     const root = document.documentElement;
     if (newTheme === "light") {
@@ -93,7 +97,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem("page-themes");
       if (!raw) return;
-      const pages: Array<{ path: string; currentTheme: ThemeMode }> = JSON.parse(raw);
+      const pages: Array<{ path: string; currentTheme: ThemeMode }> =
+        JSON.parse(raw);
       const cfg = pages.find((p) => pathname?.includes(p.path));
       if (cfg) {
         // apply transiently (do not overwrite stored app-theme)

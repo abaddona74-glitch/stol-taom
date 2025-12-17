@@ -60,7 +60,12 @@ export async function GET(req: NextRequest) {
         if (r && dbUser) {
           try {
             const ttl = Number(process.env.USER_CACHE_TTL_SECONDS || "60");
-            await r.set(userCacheKey, JSON.stringify(dbUser), "EX", Math.max(10, ttl));
+            await r.set(
+              userCacheKey,
+              JSON.stringify(dbUser),
+              "EX",
+              Math.max(10, ttl),
+            );
           } catch {
             // ignore cache set errors
           }
@@ -104,7 +109,12 @@ export async function GET(req: NextRequest) {
         if (r2 && dbUser) {
           try {
             const ttl = Number(process.env.USER_CACHE_TTL_SECONDS || "60");
-            await r2.set(userCacheKey2, JSON.stringify(dbUser), "EX", Math.max(10, ttl));
+            await r2.set(
+              userCacheKey2,
+              JSON.stringify(dbUser),
+              "EX",
+              Math.max(10, ttl),
+            );
           } catch {
             // ignore cache set errors
           }
@@ -112,7 +122,9 @@ export async function GET(req: NextRequest) {
       }
       if (!dbUser)
         return NextResponse.json({ authenticated: false }, { status: 401 });
-      const roles = await getUserRoles(String(refreshed.user.id)).catch(() => []);
+      const roles = await getUserRoles(String(refreshed.user.id)).catch(
+        () => [],
+      );
       const res = NextResponse.json({
         authenticated: true,
         user: {

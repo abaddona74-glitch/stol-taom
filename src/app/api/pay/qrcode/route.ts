@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         confirmUrl = `${base}/api/pay/demo/confirm?t=${encodeURIComponent(token)}`;
         qrData = makeSimpleSvgDataUrl(confirmUrl);
       }
-    } catch { }
+    } catch {}
 
     const paymentRequest = {
       id: `qrcode-${Date.now()}`,

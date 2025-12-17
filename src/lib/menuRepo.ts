@@ -116,7 +116,7 @@ export const menuRepo = {
                   } finally {
                     try {
                       await r.del(lockKey);
-                    } catch { }
+                    } catch {}
                   }
                 })();
               }
@@ -246,7 +246,7 @@ export const menuRepo = {
         // fallback to invalidation if write-through fails
         try {
           invalidateMenuListCache();
-        } catch { }
+        } catch {}
         // eslint-disable-next-line no-console
         console.warn("[menuRepo:cache] write-through error", err);
       }

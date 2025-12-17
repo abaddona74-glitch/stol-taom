@@ -32,13 +32,17 @@ export default function ManagementIndex() {
             Restaurant Management
           </h1>
           <p className="text-gray-600 dark:text-gray-300">
-            Choose your restaurant and sign in as a manager to access its management dashboard.
+            Choose your restaurant and sign in as a manager to access its
+            management dashboard.
           </p>
         </div>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-pulse">
+              <div
+                key={i}
+                className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden animate-pulse"
+              >
                 <div className="h-48 bg-gray-300 dark:bg-gray-700" />
                 <div className="p-6">
                   <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded mb-3" />
@@ -60,8 +64,12 @@ export default function ManagementIndex() {
                     {(() => {
                       const imgSrc = r.logoUrl || r.imageUrl;
                       const hasValidSrc =
-                        typeof imgSrc === "string" && imgSrc.length > 0 &&
-                        (imgSrc.startsWith("/") || imgSrc.startsWith("http://") || imgSrc.startsWith("https://") || imgSrc.startsWith("data:"));
+                        typeof imgSrc === "string" &&
+                        imgSrc.length > 0 &&
+                        (imgSrc.startsWith("/") ||
+                          imgSrc.startsWith("http://") ||
+                          imgSrc.startsWith("https://") ||
+                          imgSrc.startsWith("data:"));
                       return hasValidSrc ? (
                         <Image
                           src={String(imgSrc)}
@@ -100,7 +108,9 @@ export default function ManagementIndex() {
               ))
             ) : (
               <div className="col-span-full text-center py-12">
-                <div className="text-gray-400 text-lg">No restaurants found</div>
+                <div className="text-gray-400 text-lg">
+                  No restaurants found
+                </div>
               </div>
             )}
           </div>

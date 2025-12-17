@@ -2,9 +2,36 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useCallback } from "react";
 
 export default function Home() {
   const router = useRouter();
+  const flyAndNavigate = useCallback(
+    (href: string) => (e: any) => {
+      e.preventDefault();
+      const el = e.currentTarget as HTMLElement;
+      // add fly (translate) + fade animation classes
+      // use Tailwind utility classes (translate + opacity + transition)
+      el.classList.add("-translate-x-500", "opacity-40", "pointer-events-none");
+      el.classList.add("transition-transform", "transition-opacity", "duration-200", "ease-in");
+
+      // navigate after transitionend (with a fallback timeout)
+      let done = false;
+      const navigate = () => {
+        if (done) return;
+        done = true;
+        router.push(href);
+      };
+      const onEnd = (ev: TransitionEvent) => {
+        // ensure it's transform or opacity transition
+        if (ev.propertyName === "transform" || ev.propertyName === "opacity") navigate();
+      };
+      el.addEventListener("transitionend", onEnd as EventListener, { once: true });
+      // fallback in case transitionend doesn't fire
+      setTimeout(navigate, 400);
+    },
+    [router]
+  );
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -34,18 +61,51 @@ export default function Home() {
             />
           </picture>
 
-          {/* 🖥 DESKTOP */}
-          <div className="hidden md:flex absolute top-0 right-0 z-10 flex-col items-end gap-[10px] mt-[10px] mr-1">
+          {/* 💻 DESKTOP & TABLET */}
+          <div className="hidden md:flex absolute top-1/2 right-4 -translate-y-1/2 z-10 flex-col items-end gap-4">
             <Link
               href="/login"
-              className="bg-[#4E6441] text-white border border-[#060101] rounded-[12px] font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[300px] h-[60px] px-[95px] text-[32px]"
+              onClick={flyAndNavigate("/login")}
+              className="flex items-center justify-end bg-[#b68c0e] text-white rounded-l-[100%] rounded-r-3xl px-8 py-3 hover:bg-[#dbbc5e] transition-colors active:translate-y-[2px] min-w-[220px]"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+                className="w-6 h-6 mr-3"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 11v2m0 0h8m0 0l-3-3m3 3l-3 3M13 7H6a2 2 0 00-2 2v6a2 2 0 002 2h7"
+                />
+              </svg>
               KIRISH
             </Link>
+
             <Link
               href="/register"
-              className="bg-[#4E6441] text-white border border-[#060101] rounded-[12px] font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[300px] h-[60px] px-[95px] text-[32px]"
+              onClick={flyAndNavigate("/register")}
+              className="flex items-center justify-end bg-[#4E6441] text-white rounded-l-[100%] rounded-r-3xl px-12 py-3 hover:bg-[#6B855A] transition-colors active:translate-y-[2px] min-w-[220px]"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+                className="w-6 h-6 mr-3"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 11a4 4 0 11-8 0 4 4 0 018 0zM6 21v-2a4 4 0 014-4h0a4 4 0 014 4v2M19 8v6M22 11h-6"
+                />
+              </svg>
               RO‘YHATDAN O‘TISH
             </Link>
           </div>
@@ -54,15 +114,49 @@ export default function Home() {
           <div className="hidden max-md:portrait:flex flex-col items-center gap-4 absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
             <Link
               href="/login"
-              className="bg-[#4E6441] text-white border border-[#060101] rounded-[12px] font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[180px] h-[48px] px-[20px] text-[18px]"
+              className="bg-[#4E6441] text-white border border-[#060101] rounded-xl font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[180px] h-[48px] px-[20px] text-[18px]"
             >
-              KIRISH
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                  className="mr-2 w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 11v2m0 0h8m0 0l-3-3m3 3l-3 3M13 7H6a2 2 0 00-2 2v6a2 2 0 002 2h7"
+                  />
+                </svg>
+                KIRISH
+              </>
             </Link>
             <Link
               href="/register"
-              className="bg-[#4E6441] text-white border border-[#060101] rounded-[12px] font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[180px] h-[48px] px-[20px] text-[18px] whitespace-nowrap"
+              className="bg-[#4E6441] text-white border border-[#060101] rounded-xl font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[180px] h-[48px] px-[20px] text-[18px] whitespace-nowrap"
             >
-              RO‘YHATDAN O‘TISH
+              <>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                  className="mr-2 w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 11a4 4 0 11-8 0 4 4 0 018 0zM6 21v-2a4 4 0 014-4h0a4 4 0 014 4v2M19 8v6M22 11h-6"
+                  />
+                </svg>
+                RO‘YHATDAN O‘TISH
+              </>
             </Link>
           </div>
 
@@ -70,13 +164,13 @@ export default function Home() {
           <div className="hidden max-md:landscape:flex flex-col items-end gap-2 absolute top-4 right-4 z-10">
             <Link
               href="/login"
-              className="bg-[#4E6441] text-white border border-[#060101] rounded-[12px] font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[140px] h-[42px] px-[16px] text-[16px]"
+              className="bg-[#4E6441] text-white border border-[#060101] rounded-xl font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[140px] h-[42px] px-[16px] text-[16px]"
             >
               KIRISH
             </Link>
             <Link
               href="/register"
-              className="bg-[#4E6441] text-white border border-[#060101] rounded-[12px] font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[140px] h-[42px] px-[16px] text-[16px] whitespace-nowrap"
+              className="bg-[#4E6441] text-white border border-[#060101] rounded-xl font-normal leading-none hover:bg-[#6B855A] transition-colors active:translate-y-[2px] select-none flex items-center justify-center text-center box-border min-w-[140px] h-[42px] px-[16px] text-[16px] whitespace-nowrap"
             >
               RO‘YHATDAN O‘TISH
             </Link>

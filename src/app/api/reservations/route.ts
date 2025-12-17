@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
         const redis = getRedis();
         if (redis) await redis.del(`orders:view:${row.userId}`);
       }
-    } catch { }
+    } catch {}
     return NextResponse.json(dto, { status: 201 });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);

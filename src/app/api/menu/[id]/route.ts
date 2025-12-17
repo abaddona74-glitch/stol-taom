@@ -85,7 +85,9 @@ export async function PUT(req: NextRequest) {
 
     if (!name && !slug && !logoUrl) {
       return NextResponse.json(
-        { error: "At least one field (name/slug/logoUrl) to update is required" },
+        {
+          error: "At least one field (name/slug/logoUrl) to update is required",
+        },
         { status: 400 },
       );
     }

@@ -11,7 +11,7 @@ function extractMenuIdFromUrl(urlStr: string) {
     const parts = url.pathname.split("/").filter(Boolean);
     const idx = parts.indexOf("restaurants");
     if (idx > 0) return parts[idx - 1];
-  } catch { }
+  } catch {}
   return undefined;
 }
 
@@ -58,7 +58,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = (await req.json()) as { restaurantIds?: string[]; priceOverride?: string | null };
+    const body = (await req.json()) as {
+      restaurantIds?: string[];
+      priceOverride?: string | null;
+    };
     if (!body.restaurantIds)
       return NextResponse.json(
         { error: "Missing restaurantIds" },
@@ -111,7 +114,10 @@ export async function PATCH(req: NextRequest) {
   }
 
   try {
-    const body = (await req.json()) as { restaurantIds?: string[]; priceOverride?: string | null };
+    const body = (await req.json()) as {
+      restaurantIds?: string[];
+      priceOverride?: string | null;
+    };
     if (!body.restaurantIds)
       return NextResponse.json(
         { error: "Missing restaurantIds" },
@@ -127,9 +133,9 @@ export async function PATCH(req: NextRequest) {
       restaurantIds.map((rid) =>
         prisma.menuItemOnRestaurant.updateMany({
           where: { menuItemId: id, restaurantId: rid },
-          data: ({ priceOverride: priceOverride || null } as any),
-        })
-      )
+          data: { priceOverride: priceOverride || null } as any,
+        }),
+      ),
     );
 
     const assigned = await prisma.menuItemOnRestaurant.findMany({

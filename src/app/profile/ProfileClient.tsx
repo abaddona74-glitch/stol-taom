@@ -130,7 +130,7 @@ export default function ProfileClient() {
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-    } catch { }
+    } catch {}
     window.location.href = "/login";
   };
 
@@ -204,7 +204,10 @@ export default function ProfileClient() {
               <>
                 <div className="sm:col-span-2 mb-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    {(me.roles && me.roles.length > 0 ? me.roles.map((r) => r.name) : ["client"]).map((r) => (
+                    {(me.roles && me.roles.length > 0
+                      ? me.roles.map((r) => r.name)
+                      : ["client"]
+                    ).map((r) => (
                       <span
                         key={r}
                         className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-gray-100"
@@ -326,7 +329,9 @@ export default function ProfileClient() {
                                   payload.phone = editPhone;
                                 const res = await fetch("/api/profile/update", {
                                   method: "POST",
-                                  headers: { "Content-Type": "application/json" },
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
                                   body: JSON.stringify(payload),
                                 });
                                 const data =
@@ -355,11 +360,11 @@ export default function ProfileClient() {
                                 setMe((prev) =>
                                   prev
                                     ? {
-                                      ...prev,
-                                      name: editName,
-                                      email: editEmail,
-                                      phone: editPhone,
-                                    }
+                                        ...prev,
+                                        name: editName,
+                                        email: editEmail,
+                                        phone: editPhone,
+                                      }
                                     : prev,
                                 );
                                 setEditing(false);
