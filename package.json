@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "preinstall": "node ./scripts/check-redis.cjs",
     "dev:webpack": "next dev",
     "dev:host": "next dev --turbopack --hostname 0.0.0.0",
     "build": "next build --turbopack",
